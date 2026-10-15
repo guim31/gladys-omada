@@ -1,0 +1,14 @@
+{
+  "errorCode": 0,
+  "msg": "Success.",
+  "result": {
+    "controllerVer": "5.15.20.20",
+    "apiVer": "3",
+    "configured": true,
+    "type": 1,
+    "supportApp": true,
+    "omadacId": "0123456789abcdef0123456789abcdef",
+    "registeredRoot": true,
+    "omadacCategory": "advanced"
+  }
+}
