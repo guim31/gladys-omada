@@ -299,6 +299,11 @@ export function createApp({
 
   /** A new config, a (re)connection to Gladys: start over. */
   async function restart(newConfig) {
+    // A read in progress uses the previous config: let it end, then start over,
+    // rather than joining it (the new config would wait for the next period).
+    if (inFlight) {
+      await inFlight;
+    }
     config = normalizeConfig(newConfig);
     connection = null;
     snapshot = null;
@@ -358,6 +363,10 @@ export function createApp({
 
     gladys.onAction('test_connection', async () => {
       logger.info('Action: connection test');
+      // A fresh connection, after the read in progress if any.
+      if (inFlight) {
+        await inFlight;
+      }
       connection = null;
       await readNow();
       if (!snapshot || lastError) {

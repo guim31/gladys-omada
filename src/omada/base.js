@@ -7,6 +7,25 @@ import { requestJson } from './http.js';
 import { ERROR_KINDS, OmadaApiError } from './errors.js';
 
 /**
+ * A part of the read the site can do without (the WAN ports of a gateway, the
+ * PoE of a switch): missing on this firmware or refused to this role, it is
+ * skipped instead of failing the whole read. Any other error still throws.
+ * @template T
+ * @param {() => Promise<T>} run
+ * @returns {Promise<T|null>}
+ */
+export async function optional(run) {
+  try {
+    return await run();
+  } catch (err) {
+    if (err.kind === ERROR_KINDS.UNSUPPORTED || err.kind === ERROR_KINDS.FORBIDDEN) {
+      return null;
+    }
+    throw err;
+  }
+}
+
+/**
  * Space the requests: Omada controllers accept about 10 requests per second
  * (Open API access guide, "API call budget"), and an OC200 is a small box.
  * One request at a time, at least `minIntervalMs` apart.

@@ -13,7 +13,7 @@
 // -----------------------------------------------------------------------------
 
 import { normalizeBaseUrl } from './http.js';
-import { createPacedRequest, fetchControllerInfo, pickSite, poeMap } from './base.js';
+import { createPacedRequest, fetchControllerInfo, optional, pickSite, poeMap } from './base.js';
 import { ERROR_KINDS, OmadaApiError, OPENAPI_CODES } from './errors.js';
 import { macApi, macKey, normalizeClient, normalizeDevice, normalizeWanPorts } from './model.js';
 
@@ -228,28 +228,21 @@ export function createOpenApiClient({
       const clients = (await connectedClients(site.id)).map(normalizeClient).filter(Boolean);
       const wans = [];
       for (const gateway of devices.filter((d) => d.type === 'gateway' && d.online)) {
-        const ports = await call(
-          'GET',
-          `sites/${site.id}/gateways/${macApi(gateway.mac)}/wan-status`,
+        const ports = await optional(() =>
+          call('GET', `sites/${site.id}/gateways/${macApi(gateway.mac)}/wan-status`),
         );
         wans.push(...normalizeWanPorts(gateway.mac, Array.isArray(ports) ? ports : []));
       }
       let poe = new Map();
       if (devices.some((d) => d.type === 'switch' && d.online)) {
-        try {
-          const usage = await call('GET', `sites/${site.id}/dashboard/poe-usage`);
-          poe = poeMap(
-            (Array.isArray(usage) ? usage : []).map((row) => [
-              macKey(row.mac),
-              typeof row.totalPowerUsed === 'number' ? row.totalPowerUsed : null,
-            ]),
-          );
-        } catch (err) {
-          // A site without PoE switch, or a role without the dashboard: no PoE reading.
-          if (err.kind !== ERROR_KINDS.UNSUPPORTED && err.kind !== ERROR_KINDS.FORBIDDEN) {
-            throw err;
-          }
-        }
+        // A site without PoE switch, or a role without the dashboard: no PoE reading.
+        const usage = await optional(() => call('GET', `sites/${site.id}/dashboard/poe-usage`));
+        poe = poeMap(
+          (Array.isArray(usage) ? usage : []).map((row) => [
+            macKey(row.mac),
+            typeof row.totalPowerUsed === 'number' ? row.totalPowerUsed : null,
+          ]),
+        );
       }
       return { siteId: site.id, siteName: site.name, devices, clients, wans, poe, at: now() };
     },

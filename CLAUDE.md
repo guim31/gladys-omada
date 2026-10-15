@@ -233,6 +233,12 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
 - La règle `data/` du `.gitignore` du template (pour le volume `/data`) exclut aussi `src/data/` :
   l'ancrer en `/data/`, dans `.prettierignore` aussi.
 
+- **Workflow YAML invalide = CI vide** (relevé sur gladys-omada, 15/10/2026) : un correctif appliqué
+  deux fois à `.github/workflows/` (deux `with:` sur une étape, deux jobs `store:`) rend le fichier
+  invalide ; GitHub ne crée alors **aucun job**, le run porte le chemin du fichier pour nom et échoue
+  sans journal, sur `main` comme sur la PR. Vérifier avec un chargeur YAML qui refuse les clés
+  dupliquées (PyYAML + `construct_mapping` strict) avant de chercher un bug dans le code.
+
 ### Langues (depuis le 11/10/2026)
 
 Tout texte montré à l'utilisateur existe en **`en`, `fr`, `de` et `es`** : manifeste, contenu des widgets, messages,

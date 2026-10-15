@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------------------
 
 import { normalizeBaseUrl, parseSetCookie } from './http.js';
-import { createPacedRequest, fetchControllerInfo, pickSite, poeMap } from './base.js';
+import { createPacedRequest, fetchControllerInfo, optional, pickSite, poeMap } from './base.js';
 import { ERROR_KINDS, OmadaApiError, versionAtLeast, WEB_LOGIN_FAILED } from './errors.js';
 import { macApi, normalizeClient, normalizeDevice, normalizeWanPorts } from './model.js';
 
@@ -206,12 +206,16 @@ export function createWebApiClient({
       const clients = (await connectedClients(site.id)).map(normalizeClient).filter(Boolean);
       const wans = [];
       for (const gateway of devices.filter((d) => d.type === 'gateway' && d.online)) {
-        const detail = await call('GET', `sites/${site.id}/gateways/${macApi(gateway.mac)}`);
+        const detail = await optional(() =>
+          call('GET', `sites/${site.id}/gateways/${macApi(gateway.mac)}`),
+        );
         wans.push(...normalizeWanPorts(gateway.mac, detail?.portStats ?? []));
       }
       const poeEntries = [];
       for (const sw of devices.filter((d) => d.type === 'switch' && d.online)) {
-        const ports = await call('GET', `sites/${site.id}/switches/${macApi(sw.mac)}/ports`);
+        const ports = await optional(() =>
+          call('GET', `sites/${site.id}/switches/${macApi(sw.mac)}/ports`),
+        );
         const powers = (Array.isArray(ports) ? ports : [])
           .map((port) => port?.portStatus?.poePower)
           .filter((watts) => typeof watts === 'number');

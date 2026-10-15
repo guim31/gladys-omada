@@ -152,9 +152,13 @@ export async function startFakeOmada({ state = createOmadaState() } = {}) {
     }
     if (route === `GET v1 ${site}/clients`) return [200, ok(page(state.clients))];
     if (new RegExp(`^GET v1 ${site}/gateways/([^/]+)/wan-status$`).test(route)) {
+      if (!state.wanStatus) return [200, { errorCode: -1600, msg: 'Unsupported request path.' }];
       return [200, ok(state.wanStatus)];
     }
-    if (route === `GET v1 ${site}/dashboard/poe-usage`) return [200, ok(state.poeUsage)];
+    if (route === `GET v1 ${site}/dashboard/poe-usage`) {
+      if (!state.poeUsage) return [200, { errorCode: -1005, msg: 'No permission.' }];
+      return [200, ok(state.poeUsage)];
+    }
     if (
       new RegExp(`^PUT v1 ${site}/switches/([^/]+)/multi-ports/(profile-override|poe-mode)$`).test(
         route,

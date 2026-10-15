@@ -318,6 +318,20 @@ test('connection status: not configured, credentials refused, connected', async 
   }
 });
 
+test('a configuration saved during a read is applied at once, not one period later', async () => {
+  const world = await createWorld();
+  try {
+    assert.deepEqual(world.gladys.fake.connectionStatus, { connected: true });
+    const reading = world.app.readNow();
+    await world.gladys.fake.configUpdated({ ...world.config, client_secret: 'rotated-secret' });
+    await reading;
+    assert.equal(world.gladys.fake.connectionStatus.connected, false);
+    assert.match(world.gladys.fake.connectionStatus.message.en, /credentials refused/);
+  } finally {
+    await world.close();
+  }
+});
+
 test('a wrong site lists the sites the credentials can see', async () => {
   const world = await createWorld({ config: { site: 'Garage' } });
   try {

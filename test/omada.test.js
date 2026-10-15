@@ -206,6 +206,24 @@ test('Open API: wrong secret, forbidden role, unknown site', async () => {
   }
 });
 
+test('a refused optional part (WAN status, PoE) does not fail the whole read', async () => {
+  const omada = await startFakeOmada();
+  try {
+    const client = openapi(omada);
+    const { site } = await client.connect('Default');
+    omada.state.wanStatus = undefined; // the fake then answers -1600 for wan-status
+    const original = omada.state.poeUsage;
+    omada.state.poeUsage = undefined;
+    const snapshot = await client.snapshot(site);
+    assert.equal(snapshot.devices.length, 6);
+    assert.equal(snapshot.wans.length, 0);
+    assert.equal(snapshot.poe.size, 0);
+    omada.state.poeUsage = original;
+  } finally {
+    await omada.close();
+  }
+});
+
 test('Open API: a firmware without the v2 clients list falls back to v1, for good', async () => {
   const omada = await startFakeOmada();
   try {
