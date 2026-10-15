@@ -30,6 +30,23 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration holds, and where:
+
+- **Secrets**: the Open API client secret or the local account password live
+  in the Gladys configuration of the integration (`secret` fields, never sent
+  back to the browser). They are never written to the logs, nor to `/data`.
+  The Open API access token lives in memory only.
+- **`/data`**: one file, `known-clients.json`, with the MAC addresses already
+  seen on each Omada site (for the "new unknown client" trigger). No name, no
+  IP address, no credential.
+- **Network**: the container only talks to the controller address of the
+  configuration (HTTPS; a self-signed certificate is accepted only when the
+  user turns the option on) and to Gladys. No cloud service, no telemetry.
+- **Commands**: the PoE, restart and SSID commands are off by default, need the
+  Open API mode, and are never exposed as device switches. Use an Open API
+  application with the smallest role that fits: a viewer role when the
+  commands stay off.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the Omada controller and devices the integration talks to.

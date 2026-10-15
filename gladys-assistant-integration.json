@@ -1,177 +1,874 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "TP-Link Omada",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Omada network: who is home, access points, switches, gateway and WAN, PoE.",
+    "fr": "Réseau Omada : présence, bornes Wi-Fi, switchs, passerelle et WAN, PoE.",
+    "de": "Omada-Netzwerk: Anwesenheit, Access Points, Switches, Gateway und WAN, PoE.",
+    "es": "Red Omada: presencia, puntos de acceso, switches, puerta de enlace y WAN, PoE."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-omada:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-omada/main/cover.png",
+  "categories": ["network"],
+  "transports": ["local"],
   "config_schema": [
     {
-      "key": "intro",
+      "key": "connection_section",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
-      "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+      "label": {
+        "en": "Omada controller",
+        "fr": "Contrôleur Omada",
+        "de": "Omada-Controller",
+        "es": "Controlador Omada"
       },
-      "links": [
+      "description": {
+        "en": "Software Controller, OC200 or OC300. Recommended: the Open API (controller 5.9 or later), with an application created in Global View > Settings > Platform Integration > Open API, in client mode. The local account mode only reads.",
+        "fr": "Software Controller, OC200 ou OC300. Recommandé : l'Open API (contrôleur 5.9 ou plus), avec une application créée dans Vue globale > Paramètres > Intégration de plateforme > Open API, en mode client. Le mode compte local ne fait que lire.",
+        "de": "Software Controller, OC200 oder OC300. Empfohlen: die Open API (Controller 5.9 oder neuer), mit einer Anwendung, die du unter Globale Ansicht > Einstellungen > Plattformintegration > Open API im Client-Modus anlegst. Der Modus mit lokalem Konto liest nur.",
+        "es": "Software Controller, OC200 u OC300. Recomendado: la Open API (controlador 5.9 o posterior), con una aplicación creada en Vista global > Ajustes > Integración de plataforma > Open API, en modo cliente. El modo de cuenta local solo lee."
+      }
+    },
+    {
+      "key": "controller_url",
+      "type": "string",
+      "label": {
+        "en": "Controller address",
+        "fr": "Adresse du contrôleur",
+        "de": "Adresse des Controllers",
+        "es": "Dirección del controlador"
+      },
+      "description": {
+        "en": "With the port: 8043 for the Software Controller, none for an OC200 or OC300.",
+        "fr": "Avec le port : 8043 pour le Software Controller, aucun pour un OC200 ou un OC300.",
+        "de": "Mit Port: 8043 für den Software Controller, keiner für einen OC200 oder OC300.",
+        "es": "Con el puerto: 8043 para el Software Controller, ninguno para un OC200 u OC300."
+      },
+      "placeholder": {
+        "en": "https://192.168.0.10:8043",
+        "fr": "https://192.168.0.10:8043",
+        "de": "https://192.168.0.10:8043",
+        "es": "https://192.168.0.10:8043"
+      },
+      "required": true
+    },
+    {
+      "key": "auth_mode",
+      "type": "select",
+      "display": "radio",
+      "label": {
+        "en": "Connection mode",
+        "fr": "Mode de connexion",
+        "de": "Verbindungsart",
+        "es": "Modo de conexión"
+      },
+      "required": true,
+      "default": "openapi",
+      "options": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "value": "openapi",
+          "label": {
+            "en": "Open API, client ID and secret (recommended)",
+            "fr": "Open API, ID client et secret (recommandé)",
+            "de": "Open API, Client-ID und Secret (empfohlen)",
+            "es": "Open API, ID de cliente y secreto (recomendado)"
+          }
+        },
+        {
+          "value": "local_account",
+          "label": {
+            "en": "Local administrator account (read-only)",
+            "fr": "Compte administrateur local (lecture seule)",
+            "de": "Lokales Administratorkonto (nur lesen)",
+            "es": "Cuenta de administrador local (solo lectura)"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "client_id",
+      "type": "string",
+      "label": {
+        "en": "Open API client ID",
+        "fr": "ID client de l'Open API",
+        "de": "Client-ID der Open API",
+        "es": "ID de cliente de la Open API"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "required": false
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "client_secret",
+      "type": "secret",
+      "label": {
+        "en": "Open API client secret",
+        "fr": "Secret client de l'Open API",
+        "de": "Client-Secret der Open API",
+        "es": "Secreto de cliente de la Open API"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "required": false
     },
     {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "key": "username",
+      "type": "string",
+      "label": {
+        "en": "Local account username",
+        "fr": "Identifiant du compte local",
+        "de": "Benutzername des lokalen Kontos",
+        "es": "Usuario de la cuenta local"
+      },
+      "description": {
+        "en": "Local account mode only: a dedicated administrator account of the controller.",
+        "fr": "Mode compte local seulement : un compte administrateur dédié du contrôleur.",
+        "de": "Nur im Modus mit lokalem Konto: ein eigenes Administratorkonto des Controllers.",
+        "es": "Solo en el modo de cuenta local: una cuenta de administrador dedicada del controlador."
+      },
+      "required": false
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": {
+        "en": "Local account password",
+        "fr": "Mot de passe du compte local",
+        "de": "Passwort des lokalen Kontos",
+        "es": "Contraseña de la cuenta local"
+      },
+      "required": false
+    },
+    {
+      "key": "site",
+      "type": "string",
+      "label": { "en": "Site", "fr": "Site", "de": "Site", "es": "Sitio" },
+      "description": {
+        "en": "Name of the Omada site, as shown in the controller.",
+        "fr": "Nom du site Omada, tel qu'affiché dans le contrôleur.",
+        "de": "Name der Omada-Site, wie im Controller angezeigt.",
+        "es": "Nombre del sitio Omada, tal como aparece en el controlador."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "Default"
+    },
+    {
+      "key": "accept_self_signed",
+      "type": "boolean",
+      "label": {
+        "en": "Accept a self-signed certificate",
+        "fr": "Accepter un certificat auto-signé",
+        "de": "Selbstsigniertes Zertifikat akzeptieren",
+        "es": "Aceptar un certificado autofirmado"
+      },
+      "description": {
+        "en": "The controller ships a self-signed certificate: turn this on unless you installed a trusted one.",
+        "fr": "Le contrôleur est livré avec un certificat auto-signé : activez ceci, sauf si vous en avez installé un reconnu.",
+        "de": "Der Controller hat ab Werk ein selbstsigniertes Zertifikat: Schalte das ein, außer du hast ein vertrauenswürdiges installiert.",
+        "es": "El controlador viene con un certificado autofirmado: active esta opción, salvo que haya instalado uno de confianza."
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "omadac_id",
+      "type": "string",
+      "label": {
+        "en": "Omada ID (cloud-based controller)",
+        "fr": "Omada ID (contrôleur cloud)",
+        "de": "Omada-ID (Cloud-Controller)",
+        "es": "Omada ID (controlador en la nube)"
+      },
+      "description": {
+        "en": "Leave empty for a local controller. For a cloud-based controller: the Omada ID of its Open API page, with its Open API address above.",
+        "fr": "Laissez vide pour un contrôleur local. Pour un contrôleur cloud : l'Omada ID de sa page Open API, avec son adresse Open API ci-dessus.",
+        "de": "Leer lassen für einen lokalen Controller. Für einen Cloud-Controller: die Omada-ID seiner Open-API-Seite, mit seiner Open-API-Adresse oben.",
+        "es": "Déjelo vacío para un controlador local. Para un controlador en la nube: el Omada ID de su página Open API, con su dirección Open API arriba."
+      },
+      "required": false
+    },
+    {
+      "key": "presence_section",
+      "type": "section",
+      "label": {
+        "en": "Presence and refresh",
+        "fr": "Présence et rafraîchissement",
+        "de": "Anwesenheit und Aktualisierung",
+        "es": "Presencia y actualización"
+      },
+      "description": {
+        "en": "The clients online appear in the Discovery tab: add the phones to follow, each becomes a presence sensor.",
+        "fr": "Les clients en ligne apparaissent dans l'onglet Découverte : ajoutez les téléphones à suivre, chacun devient un capteur de présence.",
+        "de": "Die Clients, die online sind, erscheinen im Tab „Entdecken“: Füge die Handys hinzu, die du verfolgen willst, jedes wird ein Anwesenheitssensor.",
+        "es": "Los clientes en línea aparecen en la pestaña Descubrir: añada los teléfonos que desee seguir, cada uno se convierte en un sensor de presencia."
+      }
+    },
+    {
+      "key": "discover_clients",
+      "type": "boolean",
+      "label": {
+        "en": "Offer the network clients in Discovery",
+        "fr": "Proposer les clients du réseau en Découverte",
+        "de": "Netzwerk-Clients unter „Entdecken“ anbieten",
+        "es": "Ofrecer los clientes de la red en Descubrir"
+      },
+      "required": false,
+      "default": true
+    },
+    {
+      "key": "away_delay",
+      "type": "number",
+      "label": {
+        "en": "Departure delay (minutes)",
+        "fr": "Délai de départ (minutes)",
+        "de": "Abwesenheitsverzögerung (Minuten)",
+        "es": "Retardo de salida (minutos)"
+      },
+      "description": {
+        "en": "How long a client must be gone before it is reported away (phones in sleep leave the Wi-Fi for a while).",
+        "fr": "Durée d'absence avant qu'un client soit déclaré parti (un téléphone en veille quitte le Wi-Fi un moment).",
+        "de": "Wie lange ein Client weg sein muss, bevor er als abwesend gilt (Handys im Ruhemodus verlassen das WLAN eine Weile).",
+        "es": "Tiempo que un cliente debe estar ausente antes de considerarlo fuera (un teléfono en reposo deja el Wi-Fi un rato)."
+      },
+      "required": false,
+      "default": 5,
+      "min": 0,
+      "max": 120
+    },
+    {
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Refresh interval",
+        "fr": "Intervalle de rafraîchissement",
+        "de": "Aktualisierungsintervall",
+        "es": "Intervalo de actualización"
+      },
+      "required": false,
+      "default": "60",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "30",
+          "label": {
+            "en": "30 seconds",
+            "fr": "30 secondes",
+            "de": "30 Sekunden",
+            "es": "30 segundos"
+          }
+        },
+        {
+          "value": "60",
+          "label": { "en": "1 minute", "fr": "1 minute", "de": "1 Minute", "es": "1 minuto" }
+        },
+        {
+          "value": "120",
+          "label": { "en": "2 minutes", "fr": "2 minutes", "de": "2 Minuten", "es": "2 minutos" }
+        },
+        {
+          "value": "300",
+          "label": { "en": "5 minutes", "fr": "5 minutes", "de": "5 Minuten", "es": "5 minutos" }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "commands_section",
+      "type": "section",
+      "label": {
+        "en": "Commands (off by default)",
+        "fr": "Commandes (désactivées par défaut)",
+        "de": "Befehle (standardmäßig aus)",
+        "es": "Comandos (desactivados por defecto)"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Open API mode only, with an application allowed to write. Cutting the PoE of a port switches off what it powers: a security camera, an access point. Turn on only what your scenes need.",
+        "fr": "Mode Open API seulement, avec une application autorisée en écriture. Couper le PoE d'un port éteint ce qu'il alimente : une caméra de sécurité, une borne. N'activez que ce dont vos scènes ont besoin.",
+        "de": "Nur im Open-API-Modus, mit einer Anwendung, die schreiben darf. Wenn du das PoE eines Ports abschaltest, geht aus, was daran hängt: eine Überwachungskamera, ein Access Point. Schalte nur ein, was deine Szenen brauchen.",
+        "es": "Solo en el modo Open API, con una aplicación autorizada a escribir. Cortar el PoE de un puerto apaga lo que alimenta: una cámara de seguridad, un punto de acceso. Active solo lo que necesiten sus escenas."
+      }
+    },
+    {
+      "key": "allow_poe_control",
+      "type": "boolean",
+      "label": {
+        "en": "Allow PoE control",
+        "fr": "Autoriser le pilotage du PoE",
+        "de": "PoE-Steuerung erlauben",
+        "es": "Permitir el control del PoE"
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": false
+    },
+    {
+      "key": "allow_reboot",
+      "type": "boolean",
+      "label": {
+        "en": "Allow restarts",
+        "fr": "Autoriser les redémarrages",
+        "de": "Neustarts erlauben",
+        "es": "Permitir los reinicios"
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "allow_ssid_control",
+      "type": "boolean",
+      "label": {
+        "en": "Allow SSID control",
+        "fr": "Autoriser le pilotage des SSID",
+        "de": "SSID-Steuerung erlauben",
+        "es": "Permitir el control de los SSID"
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de las funciones"
+      },
+      "description": {
+        "en": "Also used for the messages of the integration. Names are set when a device is added.",
+        "fr": "Sert aussi aux messages de l'intégration. Les noms sont fixés à l'ajout d'un appareil.",
+        "de": "Gilt auch für die Meldungen der Integration. Die Namen werden beim Hinzufügen eines Geräts festgelegt.",
+        "es": "También se usa para los mensajes de la integración. Los nombres se fijan al añadir un dispositivo."
+      },
+      "required": false,
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": { "en": "English", "fr": "Anglais", "de": "Englisch", "es": "Inglés" }
+        },
+        {
+          "value": "fr",
+          "label": { "en": "French", "fr": "Français", "de": "Französisch", "es": "Francés" }
+        },
+        {
+          "value": "de",
+          "label": { "en": "German", "fr": "Allemand", "de": "Deutsch", "es": "Alemán" }
+        },
+        {
+          "value": "es",
+          "label": { "en": "Spanish", "fr": "Espagnol", "de": "Spanisch", "es": "Español" }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "timeout_seconds": 60
     },
     {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "set_poe",
+      "label": {
+        "en": "PoE of a switch port",
+        "fr": "PoE d'un port de switch",
+        "de": "PoE eines Switch-Ports",
+        "es": "PoE de un puerto de switch"
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": { "en": "Switch", "fr": "Switch", "de": "Switch", "es": "Switch" },
           "required": true
+        },
+        {
+          "key": "port",
+          "type": "number",
+          "label": { "en": "Port", "fr": "Port", "de": "Port", "es": "Puerto" },
+          "required": true,
+          "min": 1,
+          "max": 128
+        },
+        {
+          "key": "state",
+          "type": "select",
+          "label": { "en": "PoE", "fr": "PoE", "de": "PoE", "es": "PoE" },
+          "required": true,
+          "options": [
+            {
+              "value": "on",
+              "label": { "en": "On", "fr": "Activé", "de": "Ein", "es": "Activado" }
+            },
+            {
+              "value": "off",
+              "label": { "en": "Off", "fr": "Désactivé", "de": "Aus", "es": "Desactivado" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "reboot_device",
+      "label": {
+        "en": "Restart an Omada device",
+        "fr": "Redémarrer un équipement Omada",
+        "de": "Ein Omada-Gerät neu starten",
+        "es": "Reiniciar un equipo Omada"
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Device", "fr": "Équipement", "de": "Gerät", "es": "Equipo" },
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "set_ssid",
+      "label": {
+        "en": "Turn an SSID on or off",
+        "fr": "Activer ou désactiver un SSID",
+        "de": "Eine SSID ein- oder ausschalten",
+        "es": "Activar o desactivar un SSID"
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "ssid",
+          "type": "string",
+          "label": {
+            "en": "SSID (network name)",
+            "fr": "SSID (nom du réseau)",
+            "de": "SSID (Netzwerkname)",
+            "es": "SSID (nombre de la red)"
+          },
+          "placeholder": { "en": "Guest", "fr": "Invités", "de": "Gäste", "es": "Invitados" },
+          "required": true
+        },
+        {
+          "key": "state",
+          "type": "select",
+          "label": { "en": "SSID", "fr": "SSID", "de": "SSID", "es": "SSID" },
+          "required": true,
+          "options": [
+            {
+              "value": "on",
+              "label": { "en": "On", "fr": "Activé", "de": "Ein", "es": "Activado" }
+            },
+            {
+              "value": "off",
+              "label": { "en": "Off", "fr": "Désactivé", "de": "Aus", "es": "Desactivado" }
+            }
+          ]
         }
       ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "new_unknown_client",
+      "label": {
+        "en": "New unknown network client",
+        "fr": "Nouveau client réseau inconnu",
+        "de": "Neuer unbekannter Netzwerk-Client",
+        "es": "Nuevo cliente de red desconocido"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A device never seen on the Omada site joins the network.",
+        "fr": "Un appareil jamais vu sur le site Omada rejoint le réseau.",
+        "de": "Ein Gerät, das noch nie auf der Omada-Site war, tritt dem Netzwerk bei.",
+        "es": "Un dispositivo nunca visto en el sitio Omada se une a la red."
+      },
+      "fields": [
+        {
+          "key": "connection",
+          "type": "select",
+          "label": { "en": "Connection", "fr": "Connexion", "de": "Verbindung", "es": "Conexión" },
+          "options": [
+            {
+              "value": "wireless",
+              "label": { "en": "Wi-Fi", "fr": "Wi-Fi", "de": "WLAN", "es": "Wi-Fi" }
+            },
+            {
+              "value": "wired",
+              "label": { "en": "Wired", "fr": "Filaire", "de": "Kabel", "es": "Por cable" }
+            }
+          ]
+        },
+        {
+          "key": "ssid",
+          "type": "string",
+          "label": { "en": "SSID", "fr": "SSID", "de": "SSID", "es": "SSID" },
+          "placeholder": { "en": "Guest", "fr": "Invités", "de": "Gäste", "es": "Invitados" }
+        },
+        {
+          "key": "guest",
+          "type": "select",
+          "label": {
+            "en": "Guest network",
+            "fr": "Réseau invité",
+            "de": "Gastnetzwerk",
+            "es": "Red de invitados"
+          },
+          "options": [
+            { "value": "yes", "label": { "en": "Yes", "fr": "Oui", "de": "Ja", "es": "Sí" } },
+            { "value": "no", "label": { "en": "No", "fr": "Non", "de": "Nein", "es": "No" } }
+          ]
+        }
+      ],
+      "variables": [
+        {
+          "key": "name",
+          "type": "string",
+          "label": { "en": "Name", "fr": "Nom", "de": "Name", "es": "Nombre" }
+        },
+        {
+          "key": "mac",
+          "type": "string",
+          "label": {
+            "en": "MAC address",
+            "fr": "Adresse MAC",
+            "de": "MAC-Adresse",
+            "es": "Dirección MAC"
+          }
+        },
+        {
+          "key": "ip",
+          "type": "string",
+          "label": {
+            "en": "IP address",
+            "fr": "Adresse IP",
+            "de": "IP-Adresse",
+            "es": "Dirección IP"
+          }
+        },
+        {
+          "key": "ssid",
+          "type": "string",
+          "label": { "en": "SSID", "fr": "SSID", "de": "SSID", "es": "SSID" }
+        },
+        {
+          "key": "connection",
+          "type": "string",
+          "label": { "en": "Connection", "fr": "Connexion", "de": "Verbindung", "es": "Conexión" }
+        },
+        {
+          "key": "connected_to",
+          "type": "string",
+          "label": {
+            "en": "Connected to",
+            "fr": "Connecté à",
+            "de": "Verbunden mit",
+            "es": "Conectado a"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_offline",
+      "label": {
+        "en": "Omada device offline",
+        "fr": "Équipement Omada hors ligne",
+        "de": "Omada-Gerät offline",
+        "es": "Equipo Omada fuera de línea"
+      },
+      "description": {
+        "en": "A gateway, a switch or an access point of the site goes offline.",
+        "fr": "Une passerelle, un switch ou une borne du site passe hors ligne.",
+        "de": "Ein Gateway, ein Switch oder ein Access Point der Site geht offline.",
+        "es": "Una puerta de enlace, un switch o un punto de acceso del sitio pasa a estar fuera de línea."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": { "en": "Device", "fr": "Équipement", "de": "Gerät", "es": "Equipo" }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "device_type",
+          "type": "select",
+          "label": { "en": "Type", "fr": "Type", "de": "Typ", "es": "Tipo" },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "gateway",
+              "label": {
+                "en": "Gateway",
+                "fr": "Passerelle",
+                "de": "Gateway",
+                "es": "Puerta de enlace"
+              }
+            },
+            {
+              "value": "switch",
+              "label": { "en": "Switch", "fr": "Switch", "de": "Switch", "es": "Switch" }
+            },
+            {
+              "value": "ap",
+              "label": {
+                "en": "Access point",
+                "fr": "Borne Wi-Fi",
+                "de": "Access Point",
+                "es": "Punto de acceso"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "device_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Device name",
+            "fr": "Nom de l'équipement",
+            "de": "Gerätename",
+            "es": "Nombre del equipo"
+          }
+        },
+        {
+          "key": "model",
+          "type": "string",
+          "label": { "en": "Model", "fr": "Modèle", "de": "Modell", "es": "Modelo" }
+        },
+        {
+          "key": "device_type",
+          "type": "string",
+          "label": { "en": "Type", "fr": "Type", "de": "Typ", "es": "Tipo" }
+        }
+      ]
+    },
+    {
+      "key": "wan_changed",
+      "label": {
+        "en": "WAN down or back",
+        "fr": "WAN coupé ou rétabli",
+        "de": "WAN weg oder zurück",
+        "es": "WAN caída o restablecida"
+      },
+      "description": {
+        "en": "A WAN port of the gateway loses Internet, or gets it back.",
+        "fr": "Un port WAN de la passerelle perd Internet, ou le retrouve.",
+        "de": "Ein WAN-Port des Gateways verliert das Internet oder bekommt es zurück.",
+        "es": "Un puerto WAN de la puerta de enlace pierde Internet o lo recupera."
+      },
+      "fields": [
+        {
+          "key": "state",
+          "type": "select",
+          "label": { "en": "Change", "fr": "Changement", "de": "Änderung", "es": "Cambio" },
+          "options": [
+            {
+              "value": "down",
+              "label": {
+                "en": "Internet lost",
+                "fr": "Internet perdu",
+                "de": "Internet weg",
+                "es": "Internet perdido"
+              }
+            },
+            {
+              "value": "up",
+              "label": {
+                "en": "Internet back",
+                "fr": "Internet rétabli",
+                "de": "Internet zurück",
+                "es": "Internet restablecido"
+              }
+            }
+          ]
+        },
+        {
+          "key": "gateway",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Gateway",
+            "fr": "Passerelle",
+            "de": "Gateway",
+            "es": "Puerta de enlace"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "state",
+          "type": "string",
+          "label": { "en": "Change", "fr": "Changement", "de": "Änderung", "es": "Cambio" }
+        },
+        {
+          "key": "port_name",
+          "type": "string",
+          "label": { "en": "WAN port", "fr": "Port WAN", "de": "WAN-Port", "es": "Puerto WAN" }
+        },
+        {
+          "key": "gateway_name",
+          "type": "string",
+          "label": {
+            "en": "Gateway",
+            "fr": "Passerelle",
+            "de": "Gateway",
+            "es": "Puerta de enlace"
+          }
+        },
+        {
+          "key": "ip",
+          "type": "string",
+          "label": {
+            "en": "WAN IP address",
+            "fr": "Adresse IP WAN",
+            "de": "WAN-IP-Adresse",
+            "es": "Dirección IP WAN"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "set_poe",
+      "label": {
+        "en": "Switch the PoE of a port",
+        "fr": "Piloter le PoE d'un port",
+        "de": "PoE eines Ports schalten",
+        "es": "Controlar el PoE de un puerto"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Turns the PoE of one switch port on or off (\"Allow PoE control\" must be on).",
+        "fr": "Active ou coupe le PoE d'un port de switch (« Autoriser le pilotage du PoE » doit être activé).",
+        "de": "Schaltet das PoE eines Switch-Ports ein oder aus („PoE-Steuerung erlauben“ muss an sein).",
+        "es": "Activa o corta el PoE de un puerto de switch («Permitir el control del PoE» debe estar activado)."
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": { "en": "Switch", "fr": "Switch", "de": "Switch", "es": "Switch" },
+          "required": true
+        },
+        {
+          "key": "port",
+          "type": "number",
+          "label": { "en": "Port", "fr": "Port", "de": "Port", "es": "Puerto" },
+          "required": true,
+          "min": 1,
+          "max": 128
+        },
+        {
+          "key": "state",
+          "type": "select",
+          "label": { "en": "PoE", "fr": "PoE", "de": "PoE", "es": "PoE" },
+          "required": true,
+          "options": [
+            {
+              "value": "on",
+              "label": { "en": "On", "fr": "Activé", "de": "Ein", "es": "Activado" }
+            },
+            {
+              "value": "off",
+              "label": { "en": "Off", "fr": "Désactivé", "de": "Aus", "es": "Desactivado" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "reboot_device",
+      "label": {
+        "en": "Restart an Omada device",
+        "fr": "Redémarrer un équipement Omada",
+        "de": "Ein Omada-Gerät neu starten",
+        "es": "Reiniciar un equipo Omada"
+      },
+      "description": {
+        "en": "Restarts a gateway, a switch or an access point (\"Allow restarts\" must be on).",
+        "fr": "Redémarre une passerelle, un switch ou une borne (« Autoriser les redémarrages » doit être activé).",
+        "de": "Startet ein Gateway, einen Switch oder einen Access Point neu („Neustarts erlauben“ muss an sein).",
+        "es": "Reinicia una puerta de enlace, un switch o un punto de acceso («Permitir los reinicios» debe estar activado)."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Device", "fr": "Équipement", "de": "Gerät", "es": "Equipo" },
           "required": true
         }
-      ],
-      "outputs": [
+      ]
+    },
+    {
+      "key": "set_ssid",
+      "label": {
+        "en": "Turn an SSID on or off",
+        "fr": "Activer ou désactiver un SSID",
+        "de": "Eine SSID ein- oder ausschalten",
+        "es": "Activar o desactivar un SSID"
+      },
+      "description": {
+        "en": "Enables or disables a Wi-Fi network on every access point, e.g. the guest Wi-Fi (\"Allow SSID control\" must be on).",
+        "fr": "Active ou désactive un réseau Wi-Fi sur toutes les bornes, par exemple le Wi-Fi invité (« Autoriser le pilotage des SSID » doit être activé).",
+        "de": "Schaltet ein WLAN auf allen Access Points ein oder aus, z. B. das Gäste-WLAN („SSID-Steuerung erlauben“ muss an sein).",
+        "es": "Activa o desactiva una red Wi-Fi en todos los puntos de acceso, por ejemplo el Wi-Fi de invitados («Permitir el control de los SSID» debe estar activado)."
+      },
+      "timeout_seconds": 60,
+      "fields": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "ssid",
+          "type": "string",
+          "label": {
+            "en": "SSID (network name)",
+            "fr": "SSID (nom du réseau)",
+            "de": "SSID (Netzwerkname)",
+            "es": "SSID (nombre de la red)"
+          },
+          "placeholder": { "en": "Guest", "fr": "Invités", "de": "Gäste", "es": "Invitados" },
+          "required": true
+        },
+        {
+          "key": "state",
+          "type": "select",
+          "label": { "en": "SSID", "fr": "SSID", "de": "SSID", "es": "SSID" },
+          "required": true,
+          "options": [
+            {
+              "value": "on",
+              "label": { "en": "On", "fr": "Activé", "de": "Ein", "es": "Activado" }
+            },
+            {
+              "value": "off",
+              "label": { "en": "Off", "fr": "Désactivé", "de": "Aus", "es": "Desactivado" }
+            }
+          ]
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "network",
+      "label": {
+        "en": "Omada network",
+        "fr": "Réseau Omada",
+        "de": "Omada-Netzwerk",
+        "es": "Red Omada"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Clients online, Internet throughput, WAN ports and Omada devices offline.",
+        "fr": "Clients en ligne, débit Internet, ports WAN et équipements Omada hors ligne.",
+        "de": "Clients online, Internet-Durchsatz, WAN-Ports und Omada-Geräte offline.",
+        "es": "Clientes en línea, caudal de Internet, puertos WAN y equipos Omada fuera de línea."
+      },
+      "icon": "wifi"
     }
   ]
 }

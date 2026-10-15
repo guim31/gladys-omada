@@ -5,19 +5,21 @@ contributors.
 
 ## What this is
 
-A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
-no build step) that runs in its own sandboxed Docker container and talks to
-Gladys through
+A Gladys Assistant **external integration** for **TP-Link Omada** networks
+(Software Controller, OC200, OC300): a Node.js service (Node 22+, ESM, no build
+step) that runs in its own sandboxed Docker container and talks to Gladys
+through
 [`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
-its only runtime dependency. It started from the official JavaScript template.
+its only runtime dependency. It started from the official JavaScript template;
+the template demo is gone.
 
 ## Commands
 
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/app.test.js              # one file
+node --test --test-name-pattern "presence" # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +33,30 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: createApp(), register(), connect()
+src/app.js                        the integration: own refresh timer (onPoll fallback), states,
+                                  Discovery, scene events, actions, widget, connection status
+src/omada/http.js                 node:https transport (self-signed certificate on option)
+src/omada/base.js                 /api/info, request pacing, site choice
+src/omada/openapi.js              Open API client (client credentials, commands)
+src/omada/webapi.js               web API client (local account, read-only)
+src/omada/client.js               picks the client of the configured mode
+src/omada/model.js                one data model for both APIs (status trap, WAN ports, clients)
+src/omada/errors.js               error kinds shown to the user
+src/devices.js                    Gladys devices and feature values from a snapshot
+src/presence.js                   presence with departure delay
+src/known-clients.js              MAC addresses already seen, in /data
+src/events.js                     scene triggers from two successive reads
+src/commands.js                   PoE / restart / SSID, off by default
+src/widgets.js                    the "network" dashboard widget
+src/i18n.js                       every text in en/fr/de/es
+src/issues.js                     a repeated failure logged once
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+scripts/probe.mjs                 read-only probe of a real controller (fake credentials)
+gladys-assistant-integration.json manifest: name, config_schema, actions, triggers, widget...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
+test/                             node --test, SDK fake Gladys + test/helpers/fakeOmada.js
+test/fixtures/{openapi,webapi}    published answers of real controllers, anonymized
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +86,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in four languages (English, French, German with
+  "du", Spanish with "usted"): action messages, manifest texts, widget texts,
+  feature names and `docs/{en,fr,de,es}.md`, kept in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +250,58 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+---
+
+# Intégration Omada : API et pièges
+
+À lire avant de toucher à `src/omada/`. Rien de ceci n'a été vérifié sur un vrai
+contrôleur (session sans matériel) : ce sont les sources publiées, croisées.
+
+## Les deux API
+
+- **Open API** (contrôleur 5.9+, recommandée) : `GET /api/info` sans login donne
+  l'`omadacId` ; jeton par `POST /openapi/authorize/token?grant_type=client_credentials`
+  avec `{ omadacId, client_id, client_secret }` dans le corps ; en-tête
+  `Authorization: AccessToken=<jeton>` ; chemins `/openapi/v1|v2/{omadacId}/sites/{siteId}/…`.
+  Réponse toujours `{ errorCode, msg, result }`, un `errorCode` non nul est un échec même en
+  HTTP 200. Codes : -44106 identifiants client refusés, -44112/-44113 jeton expiré/invalide
+  (on redemande un jeton une fois), -1005/-1007/-1505 rôle insuffisant, -1600 chemin inconnu
+  de ce firmware. Liste paginée : `page`, `pageSize` ≤ 1000, `totalRows`.
+- **API web** (compte local, celle de l'interface Omada et de Home Assistant core) :
+  `POST /{omadacId}/api/v2/login`, puis en-tête `Csrf-Token` + cookie `TPOMADA_SESSIONID`.
+  Une session expirée répond **la page de login en HTML avec un 200** : la détecter au
+  `Content-Type`. Sites par `GET users/current` (`privilege.sites[].key`). Contrôleur 6.2+ :
+  la liste des clients passe par `POST /openapi/v2/{omadacId}/sites/{site}/clients` avec la
+  même session. **Lecture seule par choix** : le PoE par cette API réécrit toute la
+  configuration du port (limites de bande passante et miroir remis à zéro).
+
+## Pièges
+
+- **`status` n'a pas le même sens** : 0/1 (hors ligne / en ligne) dans l'Open API,
+  code détaillé (14 = connecté) dans l'API web, dont le 0/1 est `statusCategory`.
+  `normalizeDevice` le gère, un test le fige.
+- Le débit WAN (`rxRate`/`txRate`) est en **Ko/s**, l'activité d'un client (`activity`,
+  `uploadActivity`) en **octets/s** ; `uploadActivity` manque sur les contrôleurs anciens
+  (pas de valeur plutôt que 0).
+- Un port WAN est un port en `mode` 0 ; `status` 1 = lien, `internetState` 1 = Internet.
+- **PoE** : passer d'abord le port en surcharge de profil
+  (`PUT …/switches/{mac}/multi-ports/profile-override`), puis
+  `PUT …/multi-ports/poe-mode` `{ portList, poeMode }` ; les variantes mono-port échouent sur
+  beaucoup de firmwares, et les switchs Agile (ES) refusent (-1001).
+- **SSID** : les réglages de SSID du site ne font que le masquer (`broadcast`). Le couper
+  vraiment passe par la surcharge par borne (`/openapi/v2/…/aps/{mac}/override`), en
+  renvoyant **toute** la liste `ssidOverrides`.
+- Débit : environ 10 requêtes par seconde par contrôleur ; les requêtes sont sérialisées et
+  espacées de 150 ms (`createPacedRequest`).
+- Les MAC sont `AA-BB-CC-DD-EE-FF` dans les chemins, 12 hex minuscules dans les identifiants
+  Gladys (`ext:<sel>:equipment:<mac>`, `ext:<sel>:client:<mac>`).
+- La présence n'est évaluée que sur une lecture réussie : un contrôleur muet ne fait partir
+  personne. Au démarrage, un client que Gladys savait présent (`last_value` 1) garde son délai.
+- Les déclencheurs ne partent que sur une transition entre deux lectures du même site ; la
+  première lecture d'un site ne fait qu'apprendre les clients (`/data/known-clients.json`),
+  comme une lecture qui en amène plus de 20 d'un coup.
+- Le validateur de manifeste du cœur 5.2.1 se lance hors du cœur : charger
+  `server/lib/external-integration/externalIntegration.validateManifest.js` avec `semver`,
+  `joi`, `dayjs` et des bouchons pour `tracer` et les modules d'énergie. Il accepte ce
+  manifeste ; vérifier qu'il rejette une copie cassée avant de s'y fier.
