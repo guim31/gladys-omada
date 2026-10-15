@@ -1,67 +1,176 @@
-# Template de démonstration
+# TP-Link Omada
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Amène votre réseau **TP-Link Omada** dans Gladys : qui est à la maison (les téléphones sur le Wi-Fi),
+l'état de vos bornes Wi-Fi, switchs et passerelle, votre connexion Internet, et quelques commandes pour
+vos scènes.
 
-## Ce que vous obtenez
+Sans lien avec TP-Link. **Développée sans le matériel : vos retours sont les bienvenus** — l'intégration
+est testée contre un faux contrôleur construit à partir de réponses publiées de vrais contrôleurs, pas
+encore contre un vrai.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+## Présentation
+
+- **Présence** : chaque téléphone, ordinateur ou appareil connecté au réseau peut devenir un capteur de
+  présence, avec un délai de départ pour qu'un téléphone en veille ne « parte » pas toutes les cinq
+  minutes.
+- **Équipements Omada** : un appareil Gladys par passerelle, switch et borne : en ligne, clients
+  connectés, temps de fonctionnement, utilisation du processeur et de la mémoire, débit des clients,
+  puissance PoE consommée sur un switch PoE, et pour la passerelle l'état Internet et le débit de chaque
+  port WAN.
+- **Déclencheurs de scène** : un nouvel appareil inconnu rejoint le réseau, un équipement Omada passe
+  hors ligne, un port WAN perd ou retrouve Internet.
+- **Commandes** (désactivées par défaut) : activer ou couper le PoE d'un port de switch, redémarrer un
+  équipement Omada, activer ou désactiver un SSID (le Wi-Fi invité).
+- **Widget de tableau de bord** : clients, débit Internet, ports WAN et équipements Omada hors ligne
+  d'un coup d'œil.
+
+## Prérequis
+
+- Un contrôleur Omada : **Software Controller**, **OC200** ou **OC300**, joignable depuis Gladys sur le
+  réseau local. Un contrôleur cloud peut fonctionner par son adresse Open API (non testé).
+- **Recommandé : l'Open API** (contrôleur 5.9 ou plus). Dans le contrôleur, ouvrez **Vue globale →
+  Paramètres → Intégration de plateforme → Open API**, ajoutez une application en mode **Client**,
+  donnez-lui le site à suivre, et notez son **ID client** et son **secret client**. Un rôle
+  _observateur_ suffit pour lire ; les commandes demandent un rôle autorisé à modifier le site
+  (administrateur).
+- **Ou un compte administrateur local** (toute version 5.x du contrôleur) : créez un compte local dédié
+  dans le contrôleur. Dans ce mode, l'intégration **ne fait que lire** : aucune commande.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+Dans Gladys, **Intégrations → TP-Link Omada → Configuration** :
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+| Champ                                                                  | À renseigner                                                                                                    |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Adresse du contrôleur                                                  | `https://<adresse>:8043` pour le Software Controller, `https://<adresse>` pour un OC200 / OC300.                |
+| Mode de connexion                                                      | Open API (recommandé) ou compte administrateur local (lecture seule).                                           |
+| ID client / secret client de l'Open API                                | L'application créée ci-dessus (mode Open API).                                                                  |
+| Identifiant / mot de passe du compte local                             | Le compte dédié (mode compte local).                                                                            |
+| Site                                                                   | Le nom du site Omada (`Default` par défaut).                                                                    |
+| Accepter un certificat auto-signé                                      | Le contrôleur est livré avec un certificat auto-signé : activez ceci, sauf si vous en avez installé un reconnu. |
+| Omada ID                                                               | Laissez vide pour un contrôleur local. Contrôleur cloud seulement : l'Omada ID affiché sur sa page Open API.    |
+| Proposer les clients du réseau                                         | Affiche les clients en ligne dans l'onglet Découverte, pour ajouter ceux à suivre.                              |
+| Délai de départ                                                        | Minutes d'absence avant qu'un client soit déclaré parti (5 par défaut).                                         |
+| Intervalle de rafraîchissement                                         | 30 s, 1 min (par défaut), 2 min ou 5 min.                                                                       |
+| Autoriser le pilotage du PoE / les redémarrages / le pilotage des SSID | Chaque commande est désactivée par défaut : n'activez que ce dont vos scènes ont besoin.                        |
+| Langue des noms de fonctionnalités                                     | Français par défaut ; les noms sont fixés à l'ajout d'un appareil.                                              |
 
-## Actions
+Cliquez ensuite sur **Tester la connexion** : le message donne le site, la version du contrôleur et ce
+qui a été trouvé. Ouvrez l'onglet **Découverte** pour ajouter les équipements Omada et les clients à
+suivre.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+**Ce que l'intégration demande au contrôleur.** Une lecture du site par intervalle de rafraîchissement :
+la liste des équipements, les clients connectés, l'état WAN de la passerelle et la consommation PoE (4 à
+6 requêtes). Les contrôleurs Omada acceptent environ 10 requêtes par seconde ; l'intégration espace ses
+requêtes et n'en envoie jamais plus d'une à la fois. Ouvrir un tableau de bord ne coûte rien au
+contrôleur : le widget montre la dernière lecture. Le jeton d'accès de l'Open API ne vit qu'en mémoire
+et se renouvelle avec les identifiants client à son expiration (deux heures).
 
-## Scènes
+## Appareils
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+**Passerelle, switch, borne** (un appareil Gladys chacun, nommé comme dans le contrôleur) :
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+| Fonctionnalité                                          | Unité         | Équipements                             |
+| ------------------------------------------------------- | ------------- | --------------------------------------- |
+| En ligne                                                | 0 / 1         | tous                                    |
+| Clients connectés                                       | nombre        | tous (clients connectés à l'équipement) |
+| Temps de fonctionnement                                 | heures        | tous                                    |
+| Utilisation du processeur, de la mémoire                | %             | tous                                    |
+| Débit descendant / montant des clients                  | Mbit/s        | switch, borne                           |
+| Puissance PoE                                           | W             | switch PoE                              |
+| Internet, débit descendant, débit montant, par port WAN | 0 / 1, Mbit/s | passerelle                              |
 
-## Tableau de bord
+Le débit des clients d'un switch ou d'une borne est la somme de l'activité en temps réel des clients
+qui y sont connectés, telle que le contrôleur la donne — pas le trafic de son lien montant.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+**Client du réseau** (un téléphone, un ordinateur…) : une fonctionnalité **Présence**
+(`presence-sensor`, oui/non). Elle vaut 1 tant que le client est connecté, et passe à 0 une fois qu'il
+a disparu depuis plus longtemps que le délai de départ. Un contrôleur qui ne répond pas ne fait jamais
+partir personne : la présence n'est évaluée que sur une lecture réussie. Les clients ajoutés restent
+dans l'onglet Découverte même absents.
+
+Tout est en lecture seule : les commandes sont des actions (voir plus bas), exprès jamais des
+interrupteurs qu'un assistant vocal ou un clic malheureux pourrait basculer.
+
+## Widget
+
+**Réseau Omada** : des tuiles pour les clients (total, Wi-Fi, filaires) et le débit Internet descendant
+et montant, puis l'état de chaque port WAN (avec son adresse IP publique), le nombre d'équipements Omada
+en ligne et le nom de ceux hors ligne. Il montre la dernière lecture et se rafraîchit avec elle.
+
+## Déclencheurs de scène
+
+| Déclencheur                   | Filtres                                           | Variables                                                 |
+| ----------------------------- | ------------------------------------------------- | --------------------------------------------------------- |
+| Nouveau client réseau inconnu | connexion (Wi-Fi / filaire), SSID, réseau invité  | nom, adresse MAC, adresse IP, SSID, connexion, connecté à |
+| Équipement Omada hors ligne   | équipement, type (passerelle, switch, borne)      | nom de l'équipement, modèle, type                         |
+| WAN coupé ou rétabli          | changement (Internet perdu / rétabli), passerelle | changement, port WAN, passerelle, adresse IP WAN          |
+
+- **Nouveau client inconnu** se déclenche pour une adresse MAC jamais vue sur le site. La première
+  lecture après l'installation ne fait qu'apprendre les clients déjà là ; les adresses MAC connues sont
+  gardées dans `/data` (adresses MAC seulement, rien d'autre).
+- **Équipement hors ligne** couvre tous les équipements Omada du site, même ceux non ajoutés à Gladys,
+  et donne leur nom pour la notification.
+- Seules les transitions déclenchent : un redémarrage de Gladys, de l'intégration ou du contrôleur ne
+  déclenche jamais rien.
+
+## Commandes
+
+Mode Open API seulement, chacune activée dans la configuration. Disponibles en boutons de l'écran de
+configuration et en actions de scène :
+
+- **PoE d'un port de switch** : choisissez le switch, le numéro de port et activé / désactivé. Le port
+  reçoit une surcharge de profil dans le contrôleur, car le PoE d'un port qui suit son profil ne peut
+  pas changer. **Attention : couper le PoE éteint ce que le port alimente** — une caméra de sécurité,
+  une borne, un téléphone. Réservez-le à ce que vous voulez vraiment éteindre (une borne la nuit, un
+  appareil à redémarrer), jamais à une caméra qui protège la maison.
+- **Redémarrer un équipement Omada** : l'équipement est hors ligne quelques minutes.
+- **Activer ou désactiver un SSID** : tapez le nom du réseau (par exemple `Invités`) ; il est activé ou
+  désactivé sur toutes les bornes qui le diffusent.
+
+Chaque commande écrit une ligne dans les journaux de l'intégration.
+
+## Exemples de scènes
+
+- **Personne à la maison** : quand la présence de tous les téléphones vaut 0, passer la maison en mode
+  absent, éteindre les lumières, armer l'alarme.
+- **Wi-Fi invité à heures fixes** : chaque jour à 8 h, action de scène _Activer ou désactiver un SSID_ →
+  `Invités`, activé ; à 23 h, désactivé.
+- **Internet coupé** : déclencheur _WAN coupé ou rétabli_, changement _Internet perdu_ → envoyer un
+  message « {{triggerEvent.data.port_name}} a perdu Internet ».
+- **Intrus sur le Wi-Fi** : déclencheur _Nouveau client réseau inconnu_, SSID `Maison` → envoyer un
+  message avec {{triggerEvent.data.name}} et {{triggerEvent.data.ip}}.
+- **Borne éteinte la nuit** : à 0 h 30, _PoE d'un port de switch_ désactivé pour le port de la borne du
+  jardin ; à 7 h, activé.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« certificat refusé »** : activez _Accepter un certificat auto-signé_.
+- **« identifiants refusés »** : vérifiez l'ID et le secret client (Open API) ou l'identifiant et le mot
+  de passe (compte local). Une application Open API supprimée ou modifiée dans le contrôleur reçoit un
+  nouveau secret.
+- **« site introuvable »** : le message liste les sites visibles avec ces identifiants ; recopiez le nom.
+- **« accès refusé »** : donnez à l'application Open API (ou au compte) l'accès au site ; pour les
+  commandes, un rôle autorisé à modifier le site.
+- **« ne répond pas comme un contrôleur Omada »** : vérifiez le port (8043 pour le Software Controller)
+  et que l'Open API existe (contrôleur 5.9 ou plus).
+- **Une commande répond une erreur sur un switch** : certains switchs (série Agile) refusent la commande
+  PoE de l'Open API ; le message du contrôleur est affiché.
+- Plus de détails : mettez la variable d'environnement `LOG_LEVEL` à `debug`. Les journaux ne
+  contiennent jamais de secret.
+
+## Limites
+
+- Développée sans le matériel : la forme des requêtes vient du guide d'accès de l'Open API et de clients
+  qui fonctionnent avec de vrais contrôleurs ; les retours de terrain sont les bienvenus.
+- Le mode compte local ne fait que lire : les commandes demandent l'Open API.
+- La présence suit le Wi-Fi : un téléphone qui quitte le Wi-Fi en veille profonde plus longtemps que le
+  délai est déclaré parti. Augmentez le délai si besoin.
+- Les téléphones avec une adresse MAC privée (aléatoire) par réseau sont un nouveau client sur chaque
+  réseau qu'ils rejoignent.
+- Le débit des clients d'un switch ou d'une borne est la somme de l'activité de ses clients, pas un
+  compteur de port. Les débits WAN sont ceux que donne le contrôleur.
+- Les noms des fonctionnalités sont figés par Gladys à l'ajout d'un appareil : changez la langue avant
+  de les ajouter.
+- Un port WAN de passerelle qui apparaît plus tard (un nouveau WAN) fait proposer « Mettre à jour » dans
+  l'onglet Découverte.

@@ -553,6 +553,22 @@ test('the controller refusing a command is reported, not hidden', async () => {
   }
 });
 
+test('a command while the controller refuses the credentials gives the translated reason', async () => {
+  const world = await createWorld({ config: { allow_reboot: true } });
+  try {
+    // A new application secret in the controller: every token request is refused.
+    await world.gladys.fake.configUpdated({
+      ...world.config,
+      client_secret: 'rotated-secret-value',
+    });
+    const ack = await world.gladys.fake.action('reboot_device', { device: AP });
+    assert.equal(ack.success, false);
+    assert.match(ack.error, /identifiants refusés/);
+  } finally {
+    await world.close();
+  }
+});
+
 test('the connection test reports the site and what it found', async () => {
   const world = await createWorld();
   try {

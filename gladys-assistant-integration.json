@@ -197,8 +197,8 @@
       "description": {
         "en": "The clients online appear in the Discovery tab: add the phones to follow, each becomes a presence sensor.",
         "fr": "Les clients en ligne apparaissent dans l'onglet Découverte : ajoutez les téléphones à suivre, chacun devient un capteur de présence.",
-        "de": "Die Clients, die online sind, erscheinen im Tab „Entdeckung“: Füge die Handys hinzu, die du verfolgen willst, jedes wird ein Anwesenheitssensor.",
-        "es": "Los clientes en línea aparecen en la pestaña Descubrimiento: añada los teléfonos que desee seguir, cada uno se convierte en un sensor de presencia."
+        "de": "Die Clients, die online sind, erscheinen im Tab „Entdecken“: Füge die Handys hinzu, die du verfolgen willst, jedes wird ein Anwesenheitssensor.",
+        "es": "Los clientes en línea aparecen en la pestaña Descubrir: añada los teléfonos que desee seguir, cada uno se convierte en un sensor de presencia."
       }
     },
     {
@@ -207,8 +207,8 @@
       "label": {
         "en": "Offer the network clients in Discovery",
         "fr": "Proposer les clients du réseau en Découverte",
-        "de": "Netzwerk-Clients in der Entdeckung anbieten",
-        "es": "Ofrecer los clientes de la red en Descubrimiento"
+        "de": "Netzwerk-Clients unter „Entdecken“ anbieten",
+        "es": "Ofrecer los clientes de la red en Descubrir"
       },
       "required": false,
       "default": true

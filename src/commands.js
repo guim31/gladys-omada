@@ -41,7 +41,8 @@ export function createCommands({ gladys, getConfig, session, refresh, logger }) 
     if (!config[option]) {
       fail(disabledText);
     }
-    const state = await session();
+    // A controller that refuses the connection: the same translated reason.
+    const state = await run(() => session());
     if (!state.snapshot) {
       fail(TEXT.notReady);
     }
