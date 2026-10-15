@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-15
+
 ### Added
 
 - Connection to a TP-Link Omada controller (Software Controller, OC200,
@@ -32,4 +34,5 @@ the notes of the version's GitHub Release.
 - Every text in English, French, German and Spanish, with the documentation in
   the four languages.
 
-[Unreleased]: https://github.com/guim31/gladys-omada/commits/main
+[Unreleased]: https://github.com/guim31/gladys-omada/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-omada/releases/tag/v1.0.1

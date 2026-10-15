@@ -1,6 +1,6 @@
 {
   "name": "gladys-omada",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "TP-Link Omada integration for Gladys Assistant: presence, access points, switches, gateway, WAN and PoE.",
   "type": "module",
